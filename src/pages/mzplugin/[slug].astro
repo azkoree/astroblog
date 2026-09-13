@@ -1,0 +1,246 @@
+---
+import { render } from "astro:content";
+import Markdown from "@components/common/Markdown.astro";
+import { Icon } from "astro-icon/components";
+import Comment from "@/components/comment/index.astro";
+import CoverImage from "@/components/common/CoverImage.astro";
+import PluginDownloads from "@/components/pages/mzplugin/PluginDownloads.astro";
+import { commentConfig, mzpluginPageConfig, siteConfig } from "@/config";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import "@/styles/mzplugin.css";
+import { getSortedMzPlugins } from "@/utils/content-utils";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import {
+	formatEngineLabel,
+	formatVersion,
+	getMzPluginUpdatedAt,
+} from "@/utils/mzplugin-utils";
+import {
+	resolveProjectImage,
+	resolveProjectImageAbsolute,
+} from "@/utils/projects-utils";
+import {
+	getFileDirFromPath,
+	removeFileExtension,
+	url,
+} from "@/utils/url-utils";
+
+// 检查页面是否启用
+if (!siteConfig.pages.mzplugin) {
+	return Astro.redirect("/404/");
+}
+
+export async function getStaticPaths() {
+	const plugins = await getSortedMzPlugins();
+	return plugins.map((entry) => ({
+		params: { slug: removeFileExtension(entry.id) },
+		props: { entry },
+	}));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+
+const {
+	title,
+	description,
+	version,
+	published,
+	tags,
+	engine,
+	mzVersion,
+	requires,
+	notes,
+	downloads,
+} = entry.data;
+
+const slug = removeFileExtension(entry.id);
+
+const versionLabel = formatVersion(version);
+const updatedAt = getMzPluginUpdatedAt(entry.data);
+const engineLabel = formatEngineLabel(engine, mzVersion);
+
+// 兼容性区块：没有任何一项要显示时整块隐藏
+const hasCompatInfo =
+	Boolean(engineLabel) || requires.length > 0 || Boolean(notes);
+
+// OG 元数据用绝对 URL；页面内预览图由 <CoverImage> 用原始 src + basePath 解析（同项目页）
+const coverOg = await resolveProjectImageAbsolute(
+	entry.data.image,
+	entry.filePath,
+);
+const coverLightboxSrc = await resolveProjectImage(
+	entry.data.image,
+	entry.filePath,
+);
+const coverBasePath = getFileDirFromPath(entry.filePath || "");
+
+// 评论：需要在 commentConfig 里启用评论系统，并在 frontmatter 里把 comment 设为 true
+const isCommentEnabled =
+	entry.data.comment &&
+	Boolean(commentConfig?.type) &&
+	commentConfig.type !== "none";
+---
+
+<MainGridLayout
+  title={title}
+  description={description || title}
+  lang={entry.data.lang || undefined}
+  setOGTypeArticle={true}
+  headings={headings}
+  postCoverImage={coverOg}
+>
+  <div class="flex w-full rounded-(--radius-large) overflow-hidden relative mb-4">
+    <div id="post-container" class="card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full">
+      <!-- 返回列表 -->
+      <a
+        href={url("/mzplugin/")}
+        class="inline-flex items-center gap-1.5 text-sm text-(--primary) hover:underline mb-4"
+      >
+        <Icon name="material-symbols:arrow-back" class="text-base" />
+        {mzpluginPageConfig.backText}
+      </a>
+
+      <!-- 标题 / 版本 / 状态 -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div
+          data-pagefind-weight="10"
+          data-pagefind-meta="title"
+          class="text-3xl md:text-[2.25rem]/[2.75rem] font-bold leading-tight text-neutral-900 dark:text-neutral-100"
+        >
+          {title}
+        </div>
+        {versionLabel && (
+          <span class="plugin-version plugin-badge-lg">{versionLabel}</span>
+        )}
+      </div>
+
+      <!-- 日期 + 标签 -->
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
+        <div class="flex items-center">
+          <div class="meta-icon">
+            <Icon name="material-symbols:calendar-today-outline-rounded" class="text-xl" />
+          </div>
+          <span class="text-50 text-sm font-medium">
+            {formatDateToYYYYMMDD(published)}
+            {entry.data.updated && ` · ${mzpluginPageConfig.updatedPrefix} ${formatDateToYYYYMMDD(updatedAt)}`}
+          </span>
+        </div>
+        {tags.length > 0 && (
+          <div class="flex items-center">
+            <div class="meta-icon">
+              <Icon name="material-symbols:tag-rounded" class="text-xl" />
+            </div>
+            <span class="flex flex-wrap items-center">
+              {tags.map((tag, i) => (
+                <span class="flex items-center">
+                  {i !== 0 && (
+                    <span class="mx-1.5 text-sm font-medium text-(--meta-divider)">/</span>
+                  )}
+                  <span class="text-50 text-sm font-medium whitespace-nowrap">{tag}</span>
+                </span>
+              ))}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {description && (
+        <p class="mt-3 text-neutral-600 dark:text-neutral-400 leading-relaxed">
+          {description}
+        </p>
+      )}
+
+      <!-- 下载 -->
+      {downloads.length > 0 && (
+        <section class="mt-5 rounded-xl border border-(--line-divider) p-4">
+          <h2 class="plugin-section-title">
+            <Icon name="material-symbols:download-rounded" class="text-base" />
+            {mzpluginPageConfig.downloadTitle}
+          </h2>
+          <PluginDownloads downloads={downloads} variant="detail" />
+        </section>
+      )}
+
+      <!-- 兼容性与依赖 -->
+      {hasCompatInfo && (
+        <section class="mt-3 rounded-xl border border-(--line-divider) p-4">
+          <h2 class="plugin-section-title">
+            <Icon name="material-symbols:checklist-rounded" class="text-base" />
+            {mzpluginPageConfig.compatTitle}
+          </h2>
+          <dl class="plugin-compat-list">
+            {engineLabel && (
+              <div class="plugin-compat-row">
+                <dt>{mzpluginPageConfig.compatEngineLabel}</dt>
+                <dd>{engineLabel}</dd>
+              </div>
+            )}
+            {requires.length > 0 && (
+              <div class="plugin-compat-row">
+                <dt>{mzpluginPageConfig.compatRequireLabel}</dt>
+                <dd>
+                  {requires.map((item, i) => (
+                    <span>
+                      {i !== 0 && <span class="mx-1.5 opacity-50">/</span>}
+                      {item.url ? (
+                        <a
+                          href={item.url}
+                          target={item.url.startsWith("/") ? undefined : "_blank"}
+                          rel={item.url.startsWith("/") ? undefined : "noopener noreferrer"}
+                          class="text-(--primary) hover:underline"
+                        >
+                          {item.name}
+                        </a>
+                      ) : (
+                        <span>{item.name}</span>
+                      )}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            )}
+            {notes && (
+              <div class="plugin-compat-row">
+                <dt>{mzpluginPageConfig.compatNotesLabel}</dt>
+                <dd>{notes}</dd>
+              </div>
+            )}
+          </dl>
+        </section>
+      )}
+
+      <!-- 预览图（可点开灯箱） -->
+      {entry.data.image && (
+        <div class="mt-4">
+          <div
+            data-fancybox="mzplugin-image"
+            data-src={coverLightboxSrc}
+            data-type="image"
+            class="relative block w-full cursor-pointer overflow-hidden rounded-xl"
+          >
+            <CoverImage
+              src={entry.data.image}
+              basePath={coverBasePath}
+              alt={title}
+              class="w-full"
+              preview={false}
+              naturalHeight
+            />
+          </div>
+        </div>
+      )}
+
+      <!-- 说明文档正文 -->
+      <div class="mt-4">
+        <Markdown class="mb-6 markdown-content">
+          <Content />
+        </Markdown>
+      </div>
+    </div>
+  </div>
+
+  {isCommentEnabled && (
+    <Comment customPath={`/mzplugin/${slug}/`} title={title} />
+  )}
+</MainGridLayout>

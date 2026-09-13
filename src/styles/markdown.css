@@ -25,6 +25,29 @@
   h4,
   h5,
   h6 {
+    /* 标题装饰：文字背后一条圆角底纹，比文字矮、横向贴着文字。
+       用绝对定位伪元素而不是直接给标题上 background：背景只能铺满整个盒子，
+       拿不到「高度小于文字」的效果，也没有自己的圆角。 */
+    position: relative;
+    z-index: 0;
+    width: fit-content;
+
+    &::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset-block: 0;
+      left: -0.3em;
+      /* 右边要扣掉 hover 锚点 #（.anchor，约 2.2ch）占的宽度，底纹才贴着标题文字 */
+      right: calc(2.2ch - 0.28em);
+      height: 0.4em;
+      margin-block: auto;
+      /* 中文字面偏下，底纹往下挪一点才对得上文字视觉中心 */
+      translate: 0 0.06em;
+      border-radius: 0.3em;
+      background-color: var(--heading-deco-bg);
+    }
+
     .anchor {
       @apply transition! -m-0.5! ml-[0.2ch]! p-0.5! select-none! opacity-0! no-underline!;
 

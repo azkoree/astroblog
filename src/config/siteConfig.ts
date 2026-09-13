@@ -21,6 +21,8 @@ const pages = resolvePageToggles({
 	dynamic: true,
 	// 项目展示页开关
 	projects: false,
+	// MZ 插件页面开关
+	mzplugin: true,
 	// 相册页面开关
 	gallery: false,
 	// 书签导航页面开关

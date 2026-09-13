@@ -83,6 +83,35 @@ export async function getSortedProjects(): Promise<
 }
 
 /**
+ * 获取全部 MZ 插件并按展示顺序排序
+ * 排序规则：手动 order 降序（越大越靠前，未设置排最后）→ 最后更新时间降序（无 updated 用 published）→ 标题兜底
+ * 注意：判断 order 是否设置必须用 !== undefined，否则 0 会被当作「未设置」排到最后
+ */
+export async function getSortedMzPlugins(): Promise<
+	CollectionEntry<"mzplugin">[]
+> {
+	const allPlugins = await getCollection("mzplugin", ({ data }) => {
+		return import.meta.env.PROD ? data.draft !== true : true;
+	});
+
+	return allPlugins.sort((a, b) => {
+		const ao = a.data.order;
+		const bo = b.data.order;
+		if (ao !== undefined && bo !== undefined) {
+			if (ao !== bo) return bo - ao;
+		} else if (ao === undefined && bo !== undefined) {
+			return 1;
+		} else if (ao !== undefined && bo === undefined) {
+			return -1;
+		}
+
+		const timeA = (a.data.updated ?? a.data.published).getTime();
+		const timeB = (b.data.updated ?? b.data.published).getTime();
+		return timeB - timeA || a.data.title.localeCompare(b.data.title);
+	});
+}
+
+/**
  * 系列内排序：按 seriesOrder 升序，未设置者排最后；再按发布日期降序、标题兜底
  * 注意：判断 seriesOrder 是否设置必须用 !== undefined，否则 0 会被当作「未设置」排到最后
  */

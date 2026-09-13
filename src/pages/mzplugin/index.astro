@@ -1,0 +1,295 @@
+---
+import { getEntry, render } from "astro:content";
+import Markdown from "@components/common/Markdown.astro";
+import { Icon } from "astro-icon/components";
+import PluginListItem from "@/components/pages/mzplugin/PluginListItem.astro";
+import { mzpluginPageConfig, siteConfig } from "@/config";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import "@/styles/dynamic.css";
+import "@/styles/mzplugin.css";
+import { getSortedMzPlugins } from "@/utils/content-utils";
+import {
+	formatEngineLabel,
+	getMzPluginUpdatedAt,
+} from "@/utils/mzplugin-utils";
+import { removeFileExtension } from "@/utils/url-utils";
+
+// 检查页面是否启用
+if (!siteConfig.pages.mzplugin) {
+	return Astro.redirect("/404/");
+}
+
+const title = mzpluginPageConfig.title;
+const description = mzpluginPageConfig.description;
+
+// 目录页的说明内容（注意事项、利用规约等）写在 src/content/spec/mzplugin.md，
+// 文件不存在时整块不显示
+const noticeEntry = await getEntry("spec", "mzplugin");
+const notice = noticeEntry ? await render(noticeEntry) : null;
+
+const plugins = await getSortedMzPlugins();
+const pluginMeta = plugins.map((entry) => ({
+	id: removeFileExtension(entry.id),
+	title: entry.data.title,
+	icon: entry.data.icon,
+	description: entry.data.description,
+	version: entry.data.version,
+	tags: entry.data.tags,
+	engineLabel: formatEngineLabel(entry.data.engine, entry.data.mzVersion),
+	updated: getMzPluginUpdatedAt(entry.data),
+	downloads: entry.data.downloads,
+}));
+
+// 标签筛选：按出现次数降序
+const tagCounts = new Map<string, number>();
+for (const plugin of pluginMeta) {
+	for (const tag of plugin.tags) {
+		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+	}
+}
+const tagFilters = [...tagCounts.entries()]
+	.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+	.map(([name, count]) => ({ name, count }));
+---
+
+<MainGridLayout title={title} description={description}>
+	<section class="dynamic-page">
+		<!-- 标题面板 -->
+		<header class="card-base dynamic-page-header">
+			<div class="dynamic-page-heading">
+				<div class="dynamic-page-icon" aria-hidden="true">
+					<Icon name={mzpluginPageConfig.icon} />
+				</div>
+				<div>
+					<h2>{title}</h2>
+					{description && <p>{description}</p>}
+				</div>
+			</div>
+			<div class="dynamic-count" aria-label={title}>
+				<Icon name={mzpluginPageConfig.icon} />
+				<strong>{pluginMeta.length}</strong>
+				<span>{title}</span>
+			</div>
+		</header>
+
+		<!-- 说明区块（注意事项、利用规约等），内容来自 src/content/spec/mzplugin.md -->
+		{
+			notice && (
+				<details class="mzplugin-notice card-base" open={mzpluginPageConfig.noticeOpen}>
+					<summary>
+						<Icon name="material-symbols:info-outline-rounded" class="text-lg" />
+						<span>{mzpluginPageConfig.noticeTitle}</span>
+						<Icon
+							name="material-symbols:expand-more"
+							class="mzplugin-notice-arrow text-xl"
+						/>
+					</summary>
+					<div class="mzplugin-notice-body">
+						<Markdown class="markdown-content">
+							<notice.Content />
+						</Markdown>
+					</div>
+				</details>
+			)
+		}
+
+		{
+			pluginMeta.length > 0 ? (
+				<mzplugin-list>
+					{/* 搜索框 */}
+					<div class="relative mb-3">
+						<Icon
+							name="material-symbols:search"
+							class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 text-lg pointer-events-none"
+						/>
+						<input
+							type="text"
+							data-search
+							placeholder={mzpluginPageConfig.searchPlaceholder}
+							class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-(--line-divider) bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:border-(--primary) focus:ring-1 focus:ring-(--primary) outline-none transition-all duration-200 text-sm"
+						/>
+					</div>
+
+					{/* 标签筛选 + 排序 */}
+					<div class="flex flex-wrap items-center justify-between gap-2 mb-5">
+						{tagFilters.length > 0 && (
+							<div class="flex flex-wrap items-center gap-2">
+								<button
+									data-tag=""
+									class="category-pill px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-200"
+									data-active
+								>
+									{mzpluginPageConfig.allTagsText}
+								</button>
+								{tagFilters.map((tag) => (
+									<button
+										data-tag={tag.name}
+										class="category-pill px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-200"
+									>
+										{tag.name}
+										<span class="pill-count">{tag.count}</span>
+									</button>
+								))}
+							</div>
+						)}
+
+						<div class="flex flex-wrap items-center gap-2">
+							<button
+								data-sort="updated"
+								class="category-pill px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 inline-flex items-center gap-1.5"
+								data-active
+							>
+								<Icon name="material-symbols:update-rounded" class="text-base" />
+								{mzpluginPageConfig.sortUpdated}
+							</button>
+							<button
+								data-sort="name"
+								class="category-pill px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 inline-flex items-center gap-1.5"
+							>
+								<Icon name="material-symbols:sort-by-alpha" class="text-base" />
+								{mzpluginPageConfig.sortName}
+							</button>
+						</div>
+					</div>
+
+					{/* 插件列表 */}
+					<div class="plugin-list" data-list>
+						{pluginMeta.map((plugin) => (
+							<PluginListItem
+								id={plugin.id}
+								title={plugin.title}
+								icon={plugin.icon}
+								description={plugin.description}
+								version={plugin.version}
+								tags={plugin.tags}
+								engineLabel={plugin.engineLabel}
+								updated={plugin.updated}
+								downloads={plugin.downloads}
+							/>
+						))}
+					</div>
+
+					{/* 筛选无结果空态 */}
+					<div class="mzplugin-empty hidden flex-col items-center justify-center py-12 text-neutral-400 dark:text-neutral-500">
+						<Icon name="material-symbols:search-off-rounded" class="text-4xl mb-3" />
+						<div class="text-sm">{i18n(I18nKey.searchNoResults)}</div>
+					</div>
+				</mzplugin-list>
+			) : (
+				<div class="card-base flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
+					<Icon name={mzpluginPageConfig.icon} class="text-6xl mb-4 opacity-50" />
+					<p class="text-lg">{mzpluginPageConfig.emptyText}</p>
+				</div>
+			)
+		}
+	</section>
+
+	<script slot="head" is:inline>
+		if (!customElements.get("mzplugin-list")) {
+			class MzPluginList extends HTMLElement {
+				selectedTag = "";
+				sortBy = "updated";
+
+				connectedCallback() {
+					this.addEventListener("click", this.handleClick);
+					this.addEventListener("input", this.handleInput);
+				}
+
+				disconnectedCallback() {
+					this.removeEventListener("click", this.handleClick);
+					this.removeEventListener("input", this.handleInput);
+				}
+
+				handleInput(e) {
+					if (e.target.matches && e.target.matches("[data-search]")) {
+						this.applyFilters();
+					}
+				}
+
+				handleClick(e) {
+					const button = e.target.closest("button");
+					if (!button) return;
+
+					if (button.dataset.tag !== undefined) {
+						this.selectedTag = button.dataset.tag;
+						this.setActive("[data-tag]", button);
+					} else if (button.dataset.sort !== undefined) {
+						this.sortBy = button.dataset.sort;
+						this.setActive("[data-sort]", button);
+						this.applySort();
+					} else {
+						return;
+					}
+
+					this.applyFilters();
+				}
+
+				setActive(selector, button) {
+					this.querySelectorAll(selector).forEach((el) =>
+						el.removeAttribute("data-active"),
+					);
+					button.setAttribute("data-active", "");
+				}
+
+				getRows() {
+					const list = this.querySelector("[data-list]");
+					return list ? Array.from(list.querySelectorAll(".plugin-row")) : [];
+				}
+
+				// 按名称或最后更新时间重排 DOM 顺序
+				applySort() {
+					const list = this.querySelector("[data-list]");
+					if (!list) return;
+					const rows = this.getRows();
+					rows.sort((a, b) => {
+						if (this.sortBy === "name") {
+							return (a.dataset.title || "").localeCompare(
+								b.dataset.title || "",
+								"zh-Hans-CN",
+							);
+						}
+						return Number(b.dataset.updated || 0) - Number(a.dataset.updated || 0);
+					});
+					const fragment = document.createDocumentFragment();
+					rows.forEach((row) => fragment.appendChild(row));
+					list.appendChild(fragment);
+				}
+
+				applyFilters() {
+					const input = this.querySelector("[data-search]");
+					const query = (input && input.value ? input.value : "")
+						.toLowerCase()
+						.trim();
+					let hasVisible = false;
+
+					this.getRows().forEach((row) => {
+						const tags = (row.dataset.tags || "").toLowerCase();
+						const tagMatch =
+							!this.selectedTag ||
+							tags.split(",").includes(this.selectedTag.toLowerCase());
+						const title = (row.dataset.title || "").toLowerCase();
+						const desc = (row.dataset.desc || "").toLowerCase();
+						const searchMatch =
+							!query ||
+							title.includes(query) ||
+							desc.includes(query) ||
+							tags.includes(query);
+
+						const visible = tagMatch && searchMatch;
+						row.style.display = visible ? "" : "none";
+						if (visible) hasVisible = true;
+					});
+
+					const empty = this.querySelector(".mzplugin-empty");
+					if (empty) {
+						empty.classList.toggle("hidden", hasVisible);
+						empty.classList.toggle("flex", !hasVisible);
+					}
+				}
+			}
+			customElements.define("mzplugin-list", MzPluginList);
+		}
+	</script>
+</MainGridLayout>

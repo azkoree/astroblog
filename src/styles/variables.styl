@@ -1,6 +1,6 @@
 /* ===== 基础变量定义 ===== */
 :root
-  --radius-large: 0.2rem
+  --radius-large: 0.5rem
   --content-delay: 150ms
 
 /* ===== 主题相关变量 ===== */
@@ -38,6 +38,9 @@
   --muted: oklch(0.93 0.015 var(--hue))
   --selection-bg: oklch(0.90 0.05 var(--hue))
   --codeblock-bg: oklch(0.17 0.015 var(--hue))
+
+  /* Markdown 标题的圆角底纹（跟随主题色，见 styles/markdown.css） */
+  --heading-deco-bg: unquote("color-mix(in oklch, var(--primary) 20%, transparent)")
   --codeblock-topbar-bg: oklch(0.3 0.02 var(--hue))
   
   --license-block-bg: rgba(0, 0, 0, 0.03)
@@ -117,6 +120,9 @@
   --muted: oklch(0.25 0.015 var(--hue))
   --selection-bg: oklch(0.40 0.08 var(--hue))
   --codeblock-bg: oklch(0.17 0.015 var(--hue))
+
+  /* Markdown 标题的圆角底纹（暗色下加深，见 styles/markdown.css） */
+  --heading-deco-bg: unquote("color-mix(in oklch, var(--primary) 26%, transparent)")
   --codeblock-topbar-bg: oklch(0.12 0.015 var(--hue))
   
   --license-block-bg: var(--codeblock-bg)
@@ -237,12 +243,12 @@
 
 /* ===== 边框半径变量 ===== */
 :root
-  --radius-sm: 0.1rem     /* 4px */
-  --radius-md: 0.15rem    /* 6px */
-  --radius-lg: 0.2rem      /* 8px */
-  --radius-xl: 0.25rem     /* 12px */
-  --radius-2xl: 3rem       /* 16px */
-  --radius-3xl: 0.35rem     /* 24px */
+  --radius-sm: 0.5rem     /* 4px */
+  --radius-md: 0.5rem    /* 6px */
+  --radius-lg: 0.5rem      /* 8px */
+  --radius-xl: 0.5rem     /* 12px */
+  --radius-2xl: 0.5rem       /* 16px */
+  --radius-3xl: 0.5rem     /* 24px */
   --radius-full: 9999px
 
 /* ===== 透明度变量 ===== */

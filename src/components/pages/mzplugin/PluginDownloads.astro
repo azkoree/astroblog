@@ -1,0 +1,96 @@
+---
+import { Icon } from "astro-icon/components";
+import { mzpluginPageConfig } from "@/config";
+import {
+	formatDownloadHint,
+	resolveDownloadTarget,
+} from "@/utils/mzplugin-utils";
+import { resolveLinkIcon } from "@/utils/projects-utils";
+
+interface Props {
+	downloads: {
+		label: string;
+		url: string;
+		icon?: string;
+		code?: string;
+		size?: string;
+		file?: string;
+	}[];
+	// row：列表行里的紧凑按钮；detail：详情页的大按钮，并显示文件名/大小
+	variant?: "row" | "detail";
+	class?: string;
+}
+
+const { downloads, variant = "row", class: className } = Astro.props;
+
+const items = (downloads || [])
+	.filter((item) => item.url)
+	.map((item) => ({
+		label: item.label,
+		code: item.code || "",
+		hint: formatDownloadHint({ size: item.size || "", file: item.file || "" }),
+		target: resolveDownloadTarget(item.url),
+		icon: resolveLinkIcon(item.icon || "", item.label),
+	}));
+
+// 提取码放在链接外面，方便选中复制而不会误触跳转
+const codeClass =
+	"text-xs font-medium text-neutral-500 dark:text-neutral-400 whitespace-nowrap";
+const buttonClass = (isFirst: boolean) =>
+	[
+		"inline-flex items-center gap-1.5 rounded-lg font-medium transition-colors",
+		variant === "detail" ? "px-4 py-2 text-sm" : "px-2.5 py-1 text-xs",
+		isFirst
+			? "bg-(--primary) text-white dark:text-black/70 hover:bg-(--primary)/80"
+			: "border border-(--primary)/40 text-(--primary) hover:bg-(--primary)/10",
+	].join(" ");
+---
+
+{
+	items.length > 0 && (
+		<div
+			class:list={[
+				"plugin-downloads flex flex-wrap items-center gap-x-3 gap-y-2",
+				className,
+			]}
+		>
+			{items.map((item, i) => (
+				<span class="plugin-download-item inline-flex items-center gap-1.5 min-w-0">
+					<a
+						href={item.target.href}
+						target={item.target.external ? "_blank" : undefined}
+						rel={item.target.external ? "noopener noreferrer" : undefined}
+						download={item.target.download}
+						title={item.hint || item.label}
+						class={buttonClass(i === 0)}
+					>
+						{item.icon.kind === "icon" && (
+							<Icon name={item.icon.value} class="text-base shrink-0" />
+						)}
+						{item.icon.kind === "image" && (
+							<img
+								src={item.icon.value}
+								alt=""
+								class="w-4 h-4 object-contain shrink-0"
+								loading="lazy"
+								decoding="async"
+							/>
+						)}
+						{item.icon.kind === "letter" && (
+							<span class="text-sm font-bold shrink-0">{item.icon.value}</span>
+						)}
+						<span class="truncate">{item.label}</span>
+					</a>
+					{item.code && (
+						<span class={codeClass}>
+							{mzpluginPageConfig.downloadCodeLabel} {item.code}
+						</span>
+					)}
+					{variant === "detail" && item.hint && (
+						<span class={codeClass}>{item.hint}</span>
+					)}
+				</span>
+			))}
+		</div>
+	)
+}

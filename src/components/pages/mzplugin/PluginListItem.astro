@@ -1,0 +1,141 @@
+---
+import { Icon } from "astro-icon/components";
+import PluginDownloads from "@/components/pages/mzplugin/PluginDownloads.astro";
+import { mzpluginPageConfig } from "@/config";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import { formatVersion, resolvePluginIcon } from "@/utils/mzplugin-utils";
+import { url } from "@/utils/url-utils";
+
+interface Props {
+	id: string;
+	title: string;
+	version?: string;
+	description?: string;
+	icon?: string;
+	tags?: string[];
+	engineLabel?: string;
+	updated?: Date;
+	downloads?: {
+		label: string;
+		url: string;
+		icon?: string;
+		code?: string;
+		size?: string;
+		file?: string;
+	}[];
+}
+
+const {
+	id,
+	title,
+	version = "",
+	description = "",
+	icon = "",
+	tags = [],
+	engineLabel = "",
+	updated,
+	downloads = [],
+} = Astro.props;
+
+const detailUrl = url(`/mzplugin/${id}/`);
+
+const versionLabel = formatVersion(version);
+const resolvedIcon = resolvePluginIcon(icon, title);
+
+// 列表行只放第一个下载入口，其余的到详情页看
+const primaryDownloads = downloads.slice(0, 1);
+
+// 前端排序用：没有更新日期时按 0 处理
+const updatedTime = updated ? updated.getTime() : 0;
+
+// 标签折叠：只显示前 N 个
+const maxTags = 2;
+const visibleTags = tags.slice(0, maxTags);
+const hiddenTagCount = tags.length - visibleTags.length;
+---
+
+<article
+  class="plugin-row card-base group"
+  data-tags={tags.join(",")}
+  data-title={title}
+  data-desc={description}
+  data-updated={updatedTime}
+>
+  <!-- 图标 -->
+  <a href={detailUrl} aria-label={title} class="plugin-row-icon" data-letter={resolvedIcon.value}>
+    {resolvedIcon.kind === "icon" && (
+      <Icon name={resolvedIcon.value} class="text-3xl text-(--primary)" />
+    )}
+    {resolvedIcon.kind === "image" && (
+      <img
+        src={resolvedIcon.value}
+        alt=""
+        class="w-full h-full object-contain"
+        loading="lazy"
+        decoding="async"
+        referrerpolicy="no-referrer"
+      />
+    )}
+    {resolvedIcon.kind === "letter" && (
+      <span class="plugin-row-letter">{resolvedIcon.value}</span>
+    )}
+  </a>
+
+  <!-- 主体信息 -->
+  <div class="plugin-row-main">
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <a
+        href={detailUrl}
+        class="plugin-row-title font-bold text-[1.15rem] leading-snug text-black/90 dark:text-white/90 transition-colors group-hover:text-(--primary)"
+      >
+        {title}
+      </a>
+      {versionLabel && (
+        <span class="plugin-version">{versionLabel}</span>
+      )}
+    </div>
+
+    {description && <p class="plugin-row-desc">{description}</p>}
+
+    <div class="plugin-row-meta">
+      {updated && (
+        <span class="plugin-row-meta-item">
+          <Icon name="material-symbols:update-rounded" class="text-sm" />
+          {mzpluginPageConfig.updatedPrefix} {formatDateToYYYYMMDD(updated)}
+        </span>
+      )}
+      {engineLabel && (
+        <span class="plugin-row-meta-item">
+          <Icon name="material-symbols:memory" class="text-sm" />
+          {engineLabel}
+        </span>
+      )}
+      {visibleTags.length > 0 && (
+        <span class="plugin-row-meta-item">
+          <Icon name="material-symbols:tag-rounded" class="text-sm" />
+          <span>
+            {visibleTags.map((tag, i) => (
+              <span>
+                {i !== 0 && <span class="mx-1 opacity-50">/</span>}
+                {tag}
+              </span>
+            ))}
+            {hiddenTagCount > 0 && <span class="ml-1 opacity-70">+{hiddenTagCount}</span>}
+          </span>
+        </span>
+      )}
+    </div>
+  </div>
+
+  <!-- 操作区 -->
+  <div class="plugin-row-actions">
+    <PluginDownloads downloads={primaryDownloads} variant="row" />
+    <a href={detailUrl} class="plugin-row-detail">
+      {mzpluginPageConfig.detailText}
+      <Icon
+        name="material-symbols:chevron-right-rounded"
+        class="text-base transition-transform group-hover:translate-x-0.5"
+      />
+    </a>
+  </div>
+</article>

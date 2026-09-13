@@ -97,16 +97,18 @@ export function url(path: string): string {
 	return joinUrl("", import.meta.env.BASE_URL, path);
 }
 
-// 内容详情页路径模式：文章(/posts/、/post/) 与 项目详情(/projects/<slug>/)
-// 用正则而非 includes("/projects/")，是为了不把 /projects/ 列表页误判成详情页
+// 内容详情页路径模式：文章(/posts/、/post/)、项目详情(/projects/<slug>/)、
+// 插件详情(/mzplugin/<slug>/)
+// 用正则而非 includes("/projects/")，是为了不把 /projects/、/mzplugin/ 列表页误判成详情页
 const CONTENT_DETAIL_PATH_PATTERNS = [
 	/\/posts\/.+/,
 	/\/post\/.+/,
 	/\/projects\/.+/,
+	/\/mzplugin\/.+/,
 ];
 
 /**
- * 判断路径是否为「内容详情页」（文章 / 项目）。
+ * 判断路径是否为「内容详情页」（文章 / 项目 / 插件）。
  * 供侧边栏组件显隐、悬浮目录、沉浸阅读等复用，统一了各处硬编码的 /posts/ 判断。
  */
 export function isArticleDetailPage(pathname: string): boolean {
