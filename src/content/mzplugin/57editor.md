@@ -19,7 +19,7 @@ downloads:
       url: https://github.com/azkoree/57_MZPlugin/releases/tag/57editor1.0
       icon: material-symbols:download-rounded
       size: 77.8 MB
-draft: true
+draft: false
 comment: true
 ---
 
