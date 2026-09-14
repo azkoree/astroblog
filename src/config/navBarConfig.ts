@@ -58,10 +58,12 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 		url: "#",
 		icon: "material-symbols:person",
 		children: [
-			
 			// MZ插件
 			LinkPresets.MzPlugin,
 			
+			// 创作
+			//LinkPresets.Works,
+
 			// 动态
 			LinkPresets.Dynamic,
 
@@ -248,11 +250,17 @@ export const LinkPresets: Record<string, NavBarLink> = {
 		icon: "material-symbols:person",
 	},
 	MzPlugin: {
-	name: "RMMZ插件",
-	url: "/mzplugin/",
-	icon: "material-symbols:extension",
-	pageKey: "mzplugin",
-},
+		name: "RMMZ插件",
+		url: "/mzplugin/",
+		icon: "material-symbols:extension",
+		pageKey: "mzplugin",
+	},
+	Works: {
+		name: "创作",
+		url: "/works/",
+		icon: "material-symbols:auto-stories",
+		pageKey: "works",
+	},
 };
 
 export const navBarConfig: NavBarConfig = getDynamicNavBarConfig();

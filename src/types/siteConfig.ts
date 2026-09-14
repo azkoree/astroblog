@@ -98,6 +98,7 @@ export type SiteConfig = {
 		dynamic: boolean; // 动态页面开关
 		projects: boolean; // 项目展示页开关
 		mzplugin: boolean; // MZ 插件页面开关
+		works: boolean; // 创作板块（世界观 / 人物 / 正文）页面开关
 	};
 
 	// 分类导航栏开关

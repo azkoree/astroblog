@@ -1,0 +1,100 @@
+---
+import { render } from "astro:content";
+import Markdown from "@components/common/Markdown.astro";
+import { Icon } from "astro-icon/components";
+import WorkCard from "@/components/pages/works/WorkCard.astro";
+import WorkOverview from "@/components/pages/works/WorkOverview.astro";
+import { siteConfig, worksConfig, worksPageConfig } from "@/config";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import "@/styles/dynamic.css";
+import "@/styles/works.css";
+import type { WorkSection } from "@/utils/works-paths";
+import {
+	getWorkList,
+	getWorkSections,
+	type WorkEntryView,
+	type WorkSummary,
+} from "@/utils/works-utils";
+
+// 检查页面是否启用
+if (!siteConfig.pages.works) {
+	return Astro.redirect("/404/");
+}
+
+const title = worksPageConfig.title;
+const description = worksPageConfig.description;
+
+const works = await getWorkList();
+
+// 只有一部作品时直接渲染作品主页（worksConfig.singleWorkMode），省掉一层点击。
+// /works/<作品>/ 这个 URL 依然存在，不做跳转。
+let single: WorkSummary | null = null;
+let singleSections: Record<WorkSection, WorkEntryView[]> | null = null;
+let SingleIntro: Awaited<ReturnType<typeof render>>["Content"] | null = null;
+// 单作品模式下这一页就等于作品主页，右侧栏也应该显示它的目录
+let singleHeadings: Awaited<ReturnType<typeof render>>["headings"] = [];
+
+if (worksConfig.singleWorkMode && works.length === 1) {
+	const only = works.at(0);
+	if (only) {
+		single = only;
+		singleSections = await getWorkSections(only.workId);
+		const intro = only.entry ? await render(only.entry) : null;
+		SingleIntro = intro?.Content ?? null;
+		singleHeadings = intro?.headings ?? [];
+	}
+}
+---
+
+<MainGridLayout
+  title={title}
+  description={description}
+  headings={single ? singleHeadings : []}
+>
+  {
+    single && singleSections ? (
+      <WorkOverview summary={single} sections={singleSections}>
+        {SingleIntro && (
+          <div class="card-base px-6 md:px-9 py-6">
+            <Markdown class="markdown-content">
+              <SingleIntro />
+            </Markdown>
+          </div>
+        )}
+      </WorkOverview>
+    ) : (
+      <section class="dynamic-page">
+        {/* 标题面板 */}
+        <header class="card-base dynamic-page-header">
+          <div class="dynamic-page-heading">
+            <div class="dynamic-page-icon" aria-hidden="true">
+              <Icon name={worksPageConfig.icon} />
+            </div>
+            <div>
+              <h2>{title}</h2>
+              {description && <p>{description}</p>}
+            </div>
+          </div>
+          <div class="dynamic-count" aria-label={title}>
+            <Icon name={worksPageConfig.icon} />
+            <strong>{works.length}</strong>
+            <span>{title}</span>
+          </div>
+        </header>
+
+        {works.length > 0 ? (
+          <div class="work-card-grid">
+            {works.map((work) => (
+              <WorkCard summary={work} />
+            ))}
+          </div>
+        ) : (
+          <div class="card-base flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
+            <Icon name={worksPageConfig.icon} class="text-6xl mb-4 opacity-50" />
+            <p class="text-lg">{worksPageConfig.worksEmptyText}</p>
+          </div>
+        )}
+      </section>
+    )
+  }
+</MainGridLayout>

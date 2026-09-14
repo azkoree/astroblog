@@ -1,0 +1,63 @@
+---
+import { render } from "astro:content";
+import Markdown from "@components/common/Markdown.astro";
+import { Icon } from "astro-icon/components";
+import WorkOverview from "@/components/pages/works/WorkOverview.astro";
+import { siteConfig, worksPageConfig } from "@/config";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import "@/styles/works.css";
+import {
+	getWorkList,
+	getWorkSections,
+	getWorksIndexHref,
+} from "@/utils/works-utils";
+
+// 检查页面是否启用
+if (!siteConfig.pages.works) {
+	return Astro.redirect("/404/");
+}
+
+export async function getStaticPaths() {
+	const works = await getWorkList();
+	return works.map((summary) => ({
+		params: { work: summary.workId },
+		props: { summary },
+	}));
+}
+
+const { summary } = Astro.props;
+const sections = await getWorkSections(summary.workId);
+
+// 作品简介正文来自该作品的 index.md；没有 index.md 时留空。
+// headings 一并交给布局，右侧栏就会显示本页目录（与文章页行为一致）
+const intro = summary.entry ? await render(summary.entry) : null;
+const Intro = intro?.Content ?? null;
+const headings = intro?.headings ?? [];
+---
+
+<MainGridLayout
+  title={summary.title}
+  description={summary.description || summary.title}
+  lang={summary.entry?.data.lang || undefined}
+  headings={headings}
+>
+  <a
+    href={getWorksIndexHref()}
+    class="inline-flex items-center gap-1.5 text-sm text-(--primary) hover:underline mb-4 ml-1"
+  >
+    <Icon name="material-symbols:arrow-back" class="text-base" />
+    {worksPageConfig.worksBackText}
+  </a>
+
+  <WorkOverview summary={summary} sections={sections}>
+    {
+      Intro && (
+        <div class="card-base px-6 md:px-9 py-6">
+          <Markdown class="markdown-content">
+            <Intro />
+          </Markdown>
+        </div>
+      )
+    }
+  </WorkOverview>
+</MainGridLayout>

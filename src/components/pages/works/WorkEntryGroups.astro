@@ -1,0 +1,122 @@
+---
+import { Icon } from "astro-icon/components";
+import WorkEntryCard from "@/components/pages/works/WorkEntryCard.astro";
+import { worksConfig, worksPageConfig } from "@/config";
+import {
+	collectWorkTags,
+	groupByCategory,
+	type WorkEntryView,
+} from "@/utils/works-utils";
+
+// 世界观 / 人物的条目列表：按 category 分组（分组可折叠）+ 按标签筛选。
+//
+// 筛选只在完整列表页开启（作品主页是节选，对节选结果筛选会漏掉没显示出来的条目）。
+// 分组顺序沿用条目排序，所以 order 依然决定先后。
+
+interface Props {
+	views: WorkEntryView[];
+	/** 是否显示标签筛选栏（完整列表页用） */
+	filterable?: boolean;
+	/** 分组是否默认折叠 */
+	categoriesOpen?: boolean;
+	/** 内容区左右缩进（作品主页嵌在卡片里时需要，直接铺在页面上时不需要） */
+	padded?: boolean;
+}
+
+const {
+	views,
+	filterable = false,
+	categoriesOpen = !worksConfig.categoriesCollapsedByDefault,
+	padded = false,
+} = Astro.props;
+
+const groups = groupByCategory(views, worksPageConfig.uncategorizedText);
+// 只有一个「未分类」组时不显示组头：那层折叠没有意义，平铺更好看
+const showGroups = groups.some((group) => !group.uncategorized);
+
+const tags = filterable ? collectWorkTags(views) : [];
+const paddingClass = padded ? "work-cat-body-pad" : "";
+---
+
+<div class="work-explorer" data-work-filter>
+  {
+    tags.length > 0 && (
+      <div class="work-filter-bar">
+        <button
+          type="button"
+          class="category-pill"
+          data-work-tag=""
+          data-active
+        >
+          {worksPageConfig.filterAllText}
+        </button>
+        {tags.map((tag) => (
+          <button type="button" class="category-pill" data-work-tag={tag.name}>
+            {tag.name}
+            <span class="pill-count">{tag.count}</span>
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  {
+    showGroups ? (
+      groups.map((group) => (
+        <div
+          class="work-cat-fold work-fold"
+          data-open={String(categoriesOpen)}
+          data-work-group
+        >
+          <button
+            type="button"
+            class="work-fold-toggle work-cat-toggle"
+            data-work-fold-toggle
+            aria-expanded={categoriesOpen}
+          >
+            <span class="work-cat-title">{group.name}</span>
+            <span class="work-cat-count">{group.views.length}</span>
+            <Icon
+              name="material-symbols:keyboard-arrow-down-rounded"
+              class="work-fold-arrow"
+            />
+          </button>
+          <div class="work-fold-body">
+            <div class="work-fold-inner">
+              <div class:list={["work-entry-grid", paddingClass]}>
+                {group.views.map((view) => (
+                  <div
+                    class="work-filter-item"
+                    data-work-tags={view.data.tags.join("|")}
+                  >
+                    <WorkEntryCard view={view} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))
+    ) : (
+      <div class:list={["work-entry-grid", paddingClass]}>
+        {views.map((view) => (
+          <div class="work-filter-item" data-work-tags={view.data.tags.join("|")}>
+            <WorkEntryCard view={view} />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  {
+    filterable && (
+      <div class="work-filter-empty" hidden>
+        <Icon
+          name="material-symbols:search-off-rounded"
+          class="text-4xl mb-3 opacity-50"
+        />
+        <div>{worksPageConfig.filterNoResultsText}</div>
+      </div>
+    )
+  }
+</div>

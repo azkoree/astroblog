@@ -9,8 +9,9 @@ import { fileURLToPath } from "node:url";
 import { slug } from "github-slugger";
 import matter from "gray-matter";
 import { getApiUrlList, processCoverImageSync } from "../utils/image-utils";
+// 作品条目的 URL 必须和路由完全一致，所以直接复用页面侧那份纯路径计算
+import { workEntryUrl } from "../utils/works-paths";
 
-const POSTS_DIR = fileURLToPath(new URL("../content/posts/", import.meta.url));
 const MARKDOWN_EXTENSION = /\.(?:md|mdx|markdown)$/i;
 const WIKI_LINK = /!?\[\[([^[\]\n]+)\]\]/g;
 const STANDALONE_WIKI_LINK = /^\[\[([^[\]\n]+)\]\]$/;
@@ -22,6 +23,30 @@ const SKIPPED_NODE_TYPES = new Set([
 ]);
 
 const frontmatterCache = new Map();
+
+/**
+ * 双链的目标来源。每个来源声明：扫哪个目录、路径怎么算、URL 怎么拼。
+ * 新增内容板块时在这里加一项，[[双链]] 就自动支持跨板块互链。
+ */
+const POSTS_SOURCE = {
+	name: "posts",
+	dir: fileURLToPath(new URL("../content/posts/", import.meta.url)),
+	// 文章 URL 一直由 entry.id 决定（frontmatter 的 slug 会覆盖 id）
+	toUrl: (meta) => createPostUrl(toEntryId(meta)),
+};
+
+const WORKS_SOURCE = {
+	name: "works",
+	dir: fileURLToPath(new URL("../content/works/", import.meta.url)),
+	// 创作板块的 URL 一律从文件路径推导，与路由（getStaticPaths）保持一致；
+	// 这条路径不认 frontmatter 的 slug，因为 slug 会改写 entry.id 却不改目录结构。
+	toUrl: (meta) => workEntryUrl(toContentPathIn(WORKS_SOURCE, meta.filePath)),
+};
+
+const LINK_SOURCES = [POSTS_SOURCE, WORKS_SOURCE];
+
+/** 内容路径允许带来源名前缀，[[posts/guide/foo]] 与 [[works/塔/world/地理志]] 都行 */
+const SOURCE_PREFIXES = new Set(LINK_SOURCES.map((source) => source.name));
 
 function normalizeContentPath(value) {
 	const contentPath = value
@@ -39,7 +64,9 @@ function normalizeContentPath(value) {
 		return "";
 	}
 
-	const withoutPrefix = segments[0] === "posts" ? segments.slice(1) : segments;
+	const withoutPrefix = SOURCE_PREFIXES.has(segments[0])
+		? segments.slice(1)
+		: segments;
 
 	return withoutPrefix.length > 0 ? withoutPrefix.join("/") : "";
 }
@@ -59,11 +86,11 @@ function createPostUrl(contentPath) {
 }
 
 /**
- * 由文章文件的绝对路径反推 content path。
+ * 由文件绝对路径反推某个来源内的 content path（内容 key）。
  */
-function toContentPath(filePath) {
+function toContentPathIn(source, filePath) {
 	return path
-		.relative(POSTS_DIR, filePath)
+		.relative(source.dir, filePath)
 		.replaceAll("\\", "/")
 		.replace(MARKDOWN_EXTENSION, "");
 }
@@ -74,11 +101,11 @@ function toContentPath(filePath) {
  * 否则回退到文件路径。注意 `slug` 不在 posts 的 zod schema 里，
  * 所以它只在这里（直接读 frontmatter）可见，`entry.data` 上取不到。
  */
-function toPostId(meta) {
+function toEntryId(meta) {
 	const declaredSlug =
 		typeof meta.data.slug === "string" ? meta.data.slug.trim() : "";
 
-	return declaredSlug || toContentPath(meta.filePath);
+	return declaredSlug || toContentPathIn(meta.source, meta.filePath);
 }
 
 function readMetaFile(filePath) {
@@ -109,9 +136,10 @@ function readMetaFile(filePath) {
 	return meta;
 }
 
-function collectPostMetas() {
+/** 递归扫某个来源目录下的所有 markdown，返回带 source 标记的 meta */
+function collectMetas(source) {
 	const metas = [];
-	const stack = [POSTS_DIR];
+	const stack = [source.dir];
 
 	while (stack.length > 0) {
 		const dir = stack.pop();
@@ -135,12 +163,22 @@ function collectPostMetas() {
 			}
 			const meta = readMetaFile(fullPath);
 			if (meta) {
-				metas.push(meta);
+				metas.push({ ...meta, source });
 			}
 		}
 	}
 
 	return metas;
+}
+
+/** 所有来源的 meta 合成一个索引，供跨板块互链使用 */
+function collectAllMetas() {
+	return LINK_SOURCES.flatMap((source) => collectMetas(source));
+}
+
+/** 展示用：来源内的相对路径，用于警告信息 */
+function describeMeta(meta) {
+	return `${meta.source.name}/${toContentPathIn(meta.source, meta.filePath)}`;
 }
 
 function findMetaBySlug(metas, target) {
@@ -172,7 +210,7 @@ function findMetaByBaseName(metas, target) {
 	if (matches.length > 1) {
 		console.warn(
 			`[remark-wiki-link] "[[${target}]]" 匹配到多个同名文件，已跳过：${matches
-				.map((meta) => toContentPath(meta.filePath))
+				.map(describeMeta)
 				.join(", ")}。请改写为更长的路径。`,
 		);
 	}
@@ -180,8 +218,44 @@ function findMetaByBaseName(metas, target) {
 	return null;
 }
 
-function readPostMeta(contentPath) {
-	const metas = collectPostMetas();
+/**
+ * 按 frontmatter title 匹配，同样只接受全站唯一。
+ * 这是中文写作体验的兜底：文件叫 lin-mo.md、标题是「林默」，写 [[林默]] 也能命中，
+ * 不必记住文件名。两部作品里有同名人物时，需要写出更长路径来消歧。
+ */
+function findMetaByTitle(metas, target) {
+	if (target.includes("/")) {
+		return null;
+	}
+
+	const matches = metas.filter((meta) => {
+		const title =
+			typeof meta.data.title === "string" ? meta.data.title.trim() : "";
+		return title !== "" && title === target;
+	});
+
+	if (matches.length === 1) {
+		return matches[0];
+	}
+	if (matches.length > 1) {
+		console.warn(
+			`[remark-wiki-link] "[[${target}]]" 匹配到多个同名标题，已跳过：${matches
+				.map(describeMeta)
+				.join(", ")}。请改写为更长的路径。`,
+		);
+	}
+
+	return null;
+}
+
+/**
+ * 解析双链目标。跨所有来源（posts / works）统一解析，所以
+ * [[林默]] 可以从世界观条目链到人物，也可以从正文链到设定。
+ *
+ * 优先级：frontmatter slug → 精确路径 → 唯一裸文件名 → 唯一标题。
+ */
+function readLinkTarget(contentPath) {
+	const metas = collectAllMetas();
 
 	// 1. frontmatter slug —— 它就是 Astro 的 entry.id，优先级最高
 	const bySlug = findMetaBySlug(metas, contentPath);
@@ -189,7 +263,7 @@ function readPostMeta(contentPath) {
 		return bySlug;
 	}
 
-	// 2. 文件路径精确匹配
+	// 2. 文件路径精确匹配，逐个来源试
 	const candidates = [
 		`${contentPath}.md`,
 		`${contentPath}.mdx`,
@@ -198,15 +272,23 @@ function readPostMeta(contentPath) {
 		`${contentPath}/index.mdx`,
 	];
 
-	for (const candidate of candidates) {
-		const meta = readMetaFile(path.join(POSTS_DIR, candidate));
-		if (meta) {
-			return meta;
+	for (const source of LINK_SOURCES) {
+		for (const candidate of candidates) {
+			const meta = readMetaFile(path.join(source.dir, candidate));
+			if (meta) {
+				return { ...meta, source };
+			}
 		}
 	}
 
-	// 3. 裸文件名兜底
-	return findMetaByBaseName(metas, contentPath);
+	// 3. 裸文件名兜底（Obsidian「尽可能简短的形式」）
+	const byBaseName = findMetaByBaseName(metas, contentPath);
+	if (byBaseName) {
+		return byBaseName;
+	}
+
+	// 4. 标题兜底：文件叫 lin-mo.md 也能用 [[林默]] 链到
+	return findMetaByTitle(metas, contentPath);
 }
 
 function formatPublishedDate(value) {
@@ -348,7 +430,7 @@ function resolveAlias(parsed, meta) {
 		path.basename(parsed.contentPath),
 	]);
 	if (meta) {
-		noise.add(toContentPath(meta.filePath));
+		noise.add(toContentPathIn(meta.source, meta.filePath));
 		noise.add(path.basename(meta.filePath).replace(MARKDOWN_EXTENSION, ""));
 	}
 
@@ -368,12 +450,12 @@ function createText(value) {
 }
 
 function createWikiLinkCard(parsed, context) {
-	const meta = readPostMeta(parsed.contentPath);
+	const meta = readLinkTarget(parsed.contentPath);
 	if (!meta) {
 		return null;
 	}
 
-	const resolvedPath = toPostId(meta);
+	const resolvedPath = toContentPathIn(meta.source, meta.filePath);
 	const title =
 		resolveAlias(parsed, meta) ||
 		(typeof meta.data.title === "string" && meta.data.title
@@ -445,7 +527,7 @@ function createWikiLinkCard(parsed, context) {
 		"a",
 		{
 			class: "card-wiki-link no-styling",
-			href: createPostUrl(resolvedPath),
+			href: meta.source.toUrl(meta),
 		},
 		children,
 	);
@@ -457,7 +539,14 @@ function createWikiLink(value) {
 		return null;
 	}
 
-	const meta = parsed.contentPath ? readPostMeta(parsed.contentPath) : null;
+	const meta = parsed.contentPath ? readLinkTarget(parsed.contentPath) : null;
+	if (parsed.contentPath && !meta) {
+		// 没解析到目标时仍然按老行为猜一个文章 URL，但同时明确告警——
+		// 双链写错只会静默产生死链，作者很难发现
+		console.warn(
+			`[remark-wiki-link] [[${parsed.contentPath}]] 未匹配到任何内容，已按文章 URL 兜底。请检查路径或标题是否写错。`,
+		);
+	}
 	const title =
 		typeof meta?.data.title === "string" && meta.data.title
 			? meta.data.title
@@ -475,7 +564,9 @@ function createWikiLink(value) {
 	}
 
 	const pageUrl = parsed.contentPath
-		? createPostUrl(meta ? toPostId(meta) : parsed.contentPath)
+		? meta
+			? meta.source.toUrl(meta)
+			: createPostUrl(parsed.contentPath)
 		: "";
 	const url = `${pageUrl}${parsed.heading ? `#${slug(parsed.heading)}` : ""}`;
 

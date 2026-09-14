@@ -1,0 +1,42 @@
+---
+import { Icon } from "astro-icon/components";
+import CoverImage from "@/components/common/CoverImage.astro";
+import { getFileDirFromPath } from "@/utils/url-utils";
+import type { WorkEntryView } from "@/utils/works-utils";
+
+interface Props {
+	view: WorkEntryView;
+}
+
+const { view } = Astro.props;
+const { data, href, section } = view;
+
+// 人物用圆形头像，世界观条目用圆角方形
+const isCharacter = section === "characters";
+const basePath = getFileDirFromPath(view.entry.filePath || "");
+// 没有配图时用标题首字兜底，避免出现空白方块
+const letter = (data.title || "?").trim().charAt(0).toUpperCase() || "?";
+---
+
+<a href={href} class="work-entry-card">
+  <div class:list={["work-entry-avatar", isCharacter && "is-character"]}>
+    {data.image ? (
+      <CoverImage
+        src={data.image}
+        basePath={basePath}
+        alt={data.title}
+        class="w-full h-full"
+        preview={false}
+      />
+    ) : (
+      <div class="work-entry-letter">{letter}</div>
+    )}
+  </div>
+
+  <div class="work-entry-main">
+    <div class="work-entry-title line-clamp-1">{data.title}</div>
+    {data.description && <div class="work-entry-desc">{data.description}</div>}
+  </div>
+
+  <Icon name="material-symbols:chevron-right-rounded" class="work-arrow" />
+</a>

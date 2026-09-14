@@ -98,17 +98,23 @@ export function url(path: string): string {
 }
 
 // 内容详情页路径模式：文章(/posts/、/post/)、项目详情(/projects/<slug>/)、
-// 插件详情(/mzplugin/<slug>/)
-// 用正则而非 includes("/projects/")，是为了不把 /projects/、/mzplugin/ 列表页误判成详情页
+// 插件详情(/mzplugin/<slug>/)、创作条目(/works/<作品>/<分区>/<条目>/)、
+// 作品主页(/works/<作品>/)
+// 用正则而非 includes("/projects/")，是为了不把列表页误判成详情页
 const CONTENT_DETAIL_PATH_PATTERNS = [
 	/\/posts\/.+/,
 	/\/post\/.+/,
 	/\/projects\/.+/,
 	/\/mzplugin\/.+/,
+	// 创作板块刻意要求三段以上：/works/<作品>/<分区>/ 是分区列表，不该被当成详情页
+	/\/works\/[^/]+\/[^/]+\/.+/,
+	// 作品主页：右侧栏显示该页目录（目录来自作品 index.md 的标题）。
+	// 刻意只匹配两段，把 /works/ 列表页和 /works/<作品>/<分区>/ 排除在外
+	/\/works\/[^/]+\/$/,
 ];
 
 /**
- * 判断路径是否为「内容详情页」（文章 / 项目 / 插件）。
+ * 判断路径是否为「内容详情页」（文章 / 项目 / 插件 / 创作条目）。
  * 供侧边栏组件显隐、悬浮目录、沉浸阅读等复用，统一了各处硬编码的 /posts/ 判断。
  */
 export function isArticleDetailPage(pathname: string): boolean {

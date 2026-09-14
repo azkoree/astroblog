@@ -1,0 +1,49 @@
+---
+import { Icon } from "astro-icon/components";
+import type { WorkEntryView } from "@/utils/works-utils";
+
+interface Props {
+	prev?: WorkEntryView;
+	next?: WorkEntryView;
+	prevLabel: string;
+	nextLabel: string;
+}
+
+const { prev, next, prevLabel, nextLabel } = Astro.props;
+---
+
+{
+  (prev || next) && (
+    <div class="work-entry-nav">
+      {prev ? (
+        <a href={prev.href} class="work-entry-nav-link">
+          <div class="work-entry-nav-inner">
+            <Icon
+              name="material-symbols:chevron-left-rounded"
+              class="text-[2rem] text-(--primary)"
+            />
+            <span class="work-entry-nav-label">{prevLabel}</span>
+            <span class="work-entry-nav-title">{prev.data.title}</span>
+          </div>
+        </a>
+      ) : (
+        <div class="w-full" />
+      )}
+
+      {next ? (
+        <a href={next.href} class="work-entry-nav-link">
+          <div class="work-entry-nav-inner is-right">
+            <span class="work-entry-nav-label">{nextLabel}</span>
+            <span class="work-entry-nav-title">{next.data.title}</span>
+            <Icon
+              name="material-symbols:chevron-right-rounded"
+              class="text-[2rem] text-(--primary)"
+            />
+          </div>
+        </a>
+      ) : (
+        <div class="w-full" />
+      )}
+    </div>
+  )
+}

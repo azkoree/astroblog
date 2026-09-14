@@ -1,0 +1,71 @@
+---
+// 创作板块「折叠 + 标签筛选」的行为脚本。
+// 拆成独立组件是为了在每个页面只输出一份：WorkEntryGroups 在作品主页上会被渲染多次，
+// 脚本跟着组件走就会重复输出。用法：每页渲染一次 <WorkFoldManager />。
+---
+
+<script is:inline>
+  function setWorkFoldOpen(fold, open) {
+    if (!fold) return;
+    fold.setAttribute("data-open", String(open));
+    const btn = fold.querySelector("[data-work-fold-toggle]");
+    if (btn) btn.setAttribute("aria-expanded", String(open));
+  }
+
+  function onWorkFoldClick(e) {
+    const btn = e.target && e.target.closest ? e.target.closest("[data-work-fold-toggle]") : null;
+    if (!btn) return;
+    const fold = btn.closest(".work-fold");
+    if (!fold) return;
+    setWorkFoldOpen(fold, fold.getAttribute("data-open") !== "true");
+  }
+
+  // 标签筛选：每个 [data-work-filter] 容器各自独立，作品主页上可能同时存在多个
+  function applyWorkTag(host, tag) {
+    var items = host.querySelectorAll(".work-filter-item");
+    var visible = 0;
+
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var tags = (item.getAttribute("data-work-tags") || "").split("|");
+      var match = !tag || tags.indexOf(tag) !== -1;
+      item.hidden = !match;
+      if (match) visible++;
+    }
+
+    // 组内一条都不剩就整组隐藏；筛选时强制展开，否则命中的条目会藏在折叠里看不到
+    var groups = host.querySelectorAll("[data-work-group]");
+    for (var j = 0; j < groups.length; j++) {
+      var group = groups[j];
+      var hasVisible = group.querySelector(".work-filter-item:not([hidden])");
+      group.hidden = !hasVisible;
+      if (tag) setWorkFoldOpen(group, true);
+    }
+
+    var empty = host.querySelector(".work-filter-empty");
+    if (empty) empty.hidden = visible > 0;
+  }
+
+  function onWorkFilterClick(e) {
+    var btn = e.target && e.target.closest ? e.target.closest("[data-work-tag]") : null;
+    if (!btn) return;
+    var host = btn.closest("[data-work-filter]");
+    if (!host) return;
+
+    var tag = btn.getAttribute("data-work-tag") || "";
+    var buttons = host.querySelectorAll("[data-work-tag]");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].removeAttribute("data-active");
+    }
+    btn.setAttribute("data-active", "");
+
+    applyWorkTag(host, tag);
+  }
+
+  // Swup 切页会重跑内联脚本，全局只注册一次，靠事件委托覆盖新内容
+  if (!window.__workFoldInit) {
+    window.__workFoldInit = true;
+    document.addEventListener("click", onWorkFoldClick);
+    document.addEventListener("click", onWorkFilterClick);
+  }
+</script>

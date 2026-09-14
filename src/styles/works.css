@@ -1,0 +1,672 @@
+/* 创作板块（/works/）样式
+   尽量复用 card-base / category-pill / meta-icon / dynamic-page-header 等既有类，
+   这里只补创作板块特有的部分。 */
+
+/* ── 作品卡片 ─────────────────────────────────────── */
+
+.work-card-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+	gap: 1rem;
+}
+
+.work-card {
+	display: flex;
+	flex-direction: column;
+}
+
+.work-card-cover {
+	position: relative;
+	display: block;
+	aspect-ratio: 2 / 1;
+	overflow: hidden;
+	margin: 1rem 1rem 0;
+	border-radius: var(--radius-large);
+	background-color: var(--btn-regular-bg);
+}
+
+.work-card-cover img {
+	transition: transform 0.3s ease;
+}
+
+.work-card:hover .work-card-cover img {
+	transform: scale(1.06);
+}
+
+.work-card-body {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	padding: 1rem;
+}
+
+.work-card-title {
+	font-size: 1.35rem;
+	line-height: 1.75rem;
+	font-weight: 700;
+	color: rgb(0 0 0 / 0.9);
+	transition: color 0.15s ease;
+}
+
+:root.dark .work-card-title {
+	color: rgb(255 255 255 / 0.9);
+}
+
+.work-card-title:hover {
+	color: var(--primary);
+}
+
+.work-card-status {
+	position: absolute;
+	top: 0.75rem;
+	right: 0.75rem;
+	z-index: 30;
+	padding: 0.125rem 0.625rem;
+	border-radius: 9999px;
+	font-size: 0.75rem;
+	font-weight: 500;
+	backdrop-filter: blur(12px);
+	background-color: rgb(0 0 0 / 0.45);
+	color: rgb(255 255 255 / 0.95);
+}
+
+.work-card-detail {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-left: auto;
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--primary);
+	transition: opacity 0.15s ease;
+}
+
+.work-card-detail:hover {
+	opacity: 0.75;
+}
+
+/* 状态徽标：作品卡片上覆盖在封面右上角，作品主页里内联在标题旁 */
+.work-status-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.75rem;
+	border-radius: 9999px;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	background-color: color-mix(in srgb, var(--primary) 12%, transparent);
+	color: var(--primary);
+}
+
+/* ── 分区统计（作品卡片 / 作品主页头部）─────────────── */
+
+.work-section-stats {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.375rem 0.75rem;
+	margin-top: 0.5rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: rgb(0 0 0 / 0.5);
+}
+
+:root.dark .work-section-stats {
+	color: rgb(255 255 255 / 0.5);
+}
+
+.work-section-stat {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.work-section-stat svg {
+	font-size: 1.125rem;
+	color: var(--primary);
+}
+
+/* ── 作品主页头部 ─────────────────────────────────── */
+
+.work-hero {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1.5rem;
+}
+
+@media (min-width: 768px) {
+	.work-hero {
+		flex-direction: row;
+		padding: 1.75rem;
+	}
+}
+
+.work-hero-cover {
+	flex-shrink: 0;
+	width: 100%;
+	overflow: hidden;
+	border-radius: var(--radius-large);
+	background-color: var(--btn-regular-bg);
+}
+
+@media (min-width: 768px) {
+	.work-hero-cover {
+		width: 16rem;
+	}
+}
+
+.work-hero-title {
+	font-size: 2rem;
+	line-height: 1.25;
+	font-weight: 700;
+	color: var(--primary);
+}
+
+.work-hero-description {
+	margin-top: 0.5rem;
+	line-height: 1.7;
+}
+
+/* ── 分区概览区块 ─────────────────────────────────── */
+
+.work-section-block + .work-section-block {
+	margin-top: 1rem;
+}
+
+.work-section-head {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 1.25rem 1.5rem;
+}
+
+.work-section-head-icon {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 9999px;
+	background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+	color: var(--primary);
+	font-size: 1.5rem;
+}
+
+.work-section-head-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.work-section-head-title {
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: rgb(0 0 0 / 0.9);
+}
+
+:root.dark .work-section-head-title {
+	color: rgb(255 255 255 / 0.9);
+}
+
+.work-section-head-desc {
+	margin-top: 0.125rem;
+	font-size: 0.875rem;
+	color: rgb(0 0 0 / 0.5);
+}
+
+:root.dark .work-section-head-desc {
+	color: rgb(255 255 255 / 0.5);
+}
+
+.work-section-head-count {
+	flex-shrink: 0;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--primary);
+}
+
+.work-section-viewall {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--primary);
+	transition: opacity 0.15s ease;
+}
+
+.work-section-viewall:hover {
+	opacity: 0.75;
+}
+
+.work-section-empty {
+	padding: 2rem 1.5rem 2.5rem;
+	text-align: center;
+	font-size: 0.875rem;
+	color: rgb(0 0 0 / 0.4);
+}
+
+:root.dark .work-section-empty {
+	color: rgb(255 255 255 / 0.4);
+}
+
+/* ── 条目卡片（世界观 / 人物）───────────────────────── */
+
+.work-entry-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+	gap: 0.75rem;
+}
+
+.work-entry-card {
+	display: flex;
+	align-items: center;
+	gap: 0.875rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--line-divider);
+	border-radius: 0.75rem;
+	transition:
+		border-color 0.15s ease,
+		transform 0.15s ease;
+}
+
+.work-entry-card:hover {
+	border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+	transform: translateY(-2px);
+}
+
+/* 人物头像用圆形，世界观等用圆角方形 */
+.work-entry-avatar {
+	flex-shrink: 0;
+	width: 3.25rem;
+	height: 3.25rem;
+	overflow: hidden;
+	border-radius: 0.625rem;
+	background-color: var(--btn-regular-bg);
+}
+
+.work-entry-avatar.is-character {
+	border-radius: 9999px;
+}
+
+.work-entry-letter {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--primary);
+}
+
+.work-entry-main {
+	flex: 1;
+	min-width: 0;
+}
+
+.work-entry-title {
+	font-weight: 600;
+	color: rgb(0 0 0 / 0.85);
+	transition: color 0.15s ease;
+}
+
+:root.dark .work-entry-title {
+	color: rgb(255 255 255 / 0.85);
+}
+
+.work-entry-card:hover .work-entry-title {
+	color: var(--primary);
+}
+
+.work-entry-desc {
+	margin-top: 0.125rem;
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	color: rgb(0 0 0 / 0.5);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+:root.dark .work-entry-desc {
+	color: rgb(255 255 255 / 0.5);
+}
+
+/* ── 章节列表 ─────────────────────────────────────── */
+
+.work-chapter-list {
+	display: flex;
+	flex-direction: column;
+	padding: 0 1.5rem 1.5rem;
+	list-style: none;
+	margin: 0;
+}
+
+.work-chapter-item + .work-chapter-item {
+	border-top: 1px dashed var(--line-divider);
+}
+
+.work-chapter-link {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 0.5rem;
+	transition: background-color 0.15s ease;
+	border-radius: 0.5rem;
+}
+
+.work-chapter-link:hover {
+	background-color: rgb(0 0 0 / 0.03);
+}
+
+:root.dark .work-chapter-link:hover {
+	background-color: rgb(255 255 255 / 0.05);
+}
+
+.work-chapter-index {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: 0.5rem;
+	background-color: var(--enter-btn-bg);
+	color: var(--primary);
+	font-size: 0.8125rem;
+	font-weight: 700;
+}
+
+.work-chapter-title {
+	flex: 1;
+	min-width: 0;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: rgb(0 0 0 / 0.8);
+	transition: color 0.15s ease;
+}
+
+:root.dark .work-chapter-title {
+	color: rgb(255 255 255 / 0.8);
+}
+
+.work-chapter-link:hover .work-chapter-title {
+	color: var(--primary);
+}
+
+.work-chapter-date {
+	flex-shrink: 0;
+	font-size: 0.8125rem;
+	color: rgb(0 0 0 / 0.35);
+}
+
+:root.dark .work-chapter-date {
+	color: rgb(255 255 255 / 0.35);
+}
+
+.work-arrow {
+	flex-shrink: 0;
+	font-size: 1.25rem;
+	color: rgb(0 0 0 / 0.15);
+	transition:
+		color 0.15s ease,
+		transform 0.15s ease;
+}
+
+:root.dark .work-arrow {
+	color: rgb(255 255 255 / 0.15);
+}
+
+.work-chapter-link:hover .work-arrow {
+	color: var(--primary);
+	transform: translateX(2px);
+}
+
+/* ── 条目页：上一条 / 下一条 ───────────────────────── */
+
+.work-entry-nav {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	width: 100%;
+	margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+	.work-entry-nav {
+		flex-direction: row;
+	}
+}
+
+.work-entry-nav-link {
+	width: 100%;
+	overflow: hidden;
+	font-weight: 700;
+	transition: transform 0.1s ease;
+}
+
+.work-entry-nav-link:active {
+	transform: scale(0.98);
+}
+
+.work-entry-nav-inner {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	width: 100%;
+	height: 3.75rem;
+	padding: 0 1rem;
+	border-radius: 1rem;
+	background-color: var(--card-bg);
+	transition: background-color 0.15s ease;
+}
+
+.work-entry-nav-inner:hover {
+	background-color: var(--btn-regular-bg-hover);
+}
+
+.work-entry-nav-label {
+	flex-shrink: 0;
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--primary);
+}
+
+.work-entry-nav-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: rgb(0 0 0 / 0.75);
+}
+
+:root.dark .work-entry-nav-title {
+	color: rgb(255 255 255 / 0.75);
+}
+
+.work-entry-nav-inner.is-right {
+	justify-content: flex-end;
+	text-align: right;
+}
+
+/* ── 折叠（分区 / 分类）─────────────────────────────── */
+/* 用 grid-template-rows 0fr→1fr 做展开动画，不需要 JS 量高度，
+   所以分区里再套分类折叠时，父级高度也能跟着子级变化，不会把内容裁掉。 */
+
+.work-fold-body {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows 0.3s ease;
+}
+
+.work-fold[data-open="true"] > .work-fold-body {
+	grid-template-rows: 1fr;
+}
+
+.work-fold-inner {
+	overflow: hidden;
+	min-height: 0;
+}
+
+.work-fold-arrow {
+	flex-shrink: 0;
+	font-size: 1.5rem;
+	color: rgb(0 0 0 / 0.2);
+	transition:
+		transform 0.3s ease,
+		color 0.15s ease;
+}
+
+:root.dark .work-fold-arrow {
+	color: rgb(255 255 255 / 0.2);
+}
+
+.work-fold[data-open="true"] .work-fold-arrow {
+	transform: rotate(180deg);
+}
+
+/* 折叠头整行都是按钮：不用「按钮里嵌链接」那种结构，避免交互元素嵌套 */
+.work-fold-toggle {
+	width: 100%;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.work-fold-toggle:hover {
+	background-color: rgb(0 0 0 / 0.02);
+}
+
+:root.dark .work-fold-toggle:hover {
+	background-color: rgb(255 255 255 / 0.04);
+}
+
+.work-fold-toggle:focus-visible {
+	outline: 2px solid var(--primary);
+	outline-offset: -2px;
+}
+
+/* 分类分组的头部比分区头小一号 */
+.work-cat-fold + .work-cat-fold {
+	border-top: 1px dashed var(--line-divider);
+}
+
+.work-cat-toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1.5rem;
+}
+
+.work-cat-title {
+	font-size: 1rem;
+	font-weight: 600;
+	color: rgb(0 0 0 / 0.8);
+}
+
+:root.dark .work-cat-title {
+	color: rgb(255 255 255 / 0.8);
+}
+
+.work-cat-count {
+	flex: 1;
+	font-size: 0.8125rem;
+	color: rgb(0 0 0 / 0.4);
+}
+
+:root.dark .work-cat-count {
+	color: rgb(255 255 255 / 0.4);
+}
+
+.work-cat-toggle .work-fold-arrow {
+	font-size: 1.25rem;
+}
+
+.work-cat-body-pad {
+	padding: 0 1.5rem 1.25rem;
+}
+
+/* 作品主页的分区内容缩进 */
+.work-sec-body-pad {
+	padding: 0 1.5rem 1.5rem;
+}
+
+/* 区块底部的「查看全部」 */
+.work-section-foot {
+	display: flex;
+	justify-content: center;
+	padding: 0 1.5rem 1.5rem;
+}
+
+.work-section-foot-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.5rem 1rem;
+	border-radius: 9999px;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--primary);
+	background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+	transition: background-color 0.15s ease;
+}
+
+.work-section-foot-link:hover {
+	background-color: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+/* ── 标签筛选（只在完整列表页出现）──────────────────── */
+
+.work-filter-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.25rem 1.5rem 1rem;
+}
+
+.work-filter-bar button {
+	font-size: 0.875rem;
+	padding: 0.25rem 0.75rem;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.work-filter-empty {
+	padding: 2.5rem 1.5rem;
+	text-align: center;
+	font-size: 0.875rem;
+	color: rgb(0 0 0 / 0.4);
+}
+
+:root.dark .work-filter-empty {
+	color: rgb(255 255 255 / 0.4);
+}
+
+/* ── 筛选条目包装 ───────────────────────────────────── */
+
+/* 卡片外面包一层是为了挂标签数据；让它撑满网格单元格 */
+.work-filter-item {
+	display: flex;
+	min-width: 0;
+}
+
+.work-filter-item > .work-entry-card {
+	flex: 1;
+	min-width: 0;
+}
+
+/* 作者样式的 display:flex 会盖过 UA 的 [hidden]，必须显式写回来 */
+.work-filter-item[hidden],
+.work-cat-fold[hidden] {
+	display: none;
+}

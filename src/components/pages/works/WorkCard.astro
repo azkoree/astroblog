@@ -1,0 +1,77 @@
+---
+import { Icon } from "astro-icon/components";
+import CoverImage from "@/components/common/CoverImage.astro";
+import { worksPageConfig } from "@/config";
+import { getFileDirFromPath } from "@/utils/url-utils";
+import { WORK_SECTION_LIST } from "@/utils/works-section-meta";
+import type { WorkSummary } from "@/utils/works-utils";
+
+interface Props {
+	summary: WorkSummary;
+}
+
+const { summary } = Astro.props;
+
+const basePath = getFileDirFromPath(summary.entry?.filePath || "");
+---
+
+<div class="work-card card-base overflow-hidden">
+  <a href={summary.href} aria-label={summary.title} class="work-card-cover">
+    {
+      summary.image ? (
+        <CoverImage
+          src={summary.image}
+          basePath={basePath}
+          alt={summary.title}
+          class="w-full h-full"
+          preview={false}
+        />
+      ) : (
+        <div class="w-full h-full flex items-center justify-center">
+          <Icon name={worksPageConfig.icon} class="text-6xl opacity-25" />
+        </div>
+      )
+    }
+    {
+      summary.status && (
+        <span class="work-card-status">{summary.status}</span>
+      )
+    }
+  </a>
+
+  <div class="work-card-body">
+    <a href={summary.href} class="work-card-title line-clamp-1">
+      {summary.title}
+    </a>
+
+    {summary.description && (
+      <p class="description text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed mt-2">
+        {summary.description}
+      </p>
+    )}
+
+    <div class="work-section-stats">
+      {
+        WORK_SECTION_LIST.map((meta) => (
+          <span class="work-section-stat">
+            <Icon name={meta.icon} />
+            {summary.counts[meta.key]}
+            {meta.unit}
+          </span>
+        ))
+      }
+    </div>
+
+    <div class="mt-auto pt-4 flex flex-wrap items-center gap-2">
+      {summary.tags.slice(0, 3).map((tag) => (
+        <span class="px-2 py-0.5 text-xs font-medium rounded-lg bg-(--primary)/10 text-(--primary)">
+          {tag}
+        </span>
+      ))}
+      <a href={summary.href} class="work-card-detail">
+        {worksPageConfig.workDetailText}
+        <Icon name="material-symbols:chevron-right-rounded" class="text-sm" />
+      </a>
+    </div>
+  </div>
+</div>

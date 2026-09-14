@@ -1,0 +1,95 @@
+---
+import { Icon } from "astro-icon/components";
+import WorkChapterList from "@/components/pages/works/WorkChapterList.astro";
+import WorkEntryGroups from "@/components/pages/works/WorkEntryGroups.astro";
+import WorkFoldManager from "@/components/pages/works/WorkFoldManager.astro";
+import { siteConfig, worksPageConfig } from "@/config";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import "@/styles/works.css";
+import type { WorkSection } from "@/utils/works-paths";
+import { WORK_SECTIONS } from "@/utils/works-paths";
+import { getWorkSectionMeta } from "@/utils/works-section-meta";
+import {
+	getWorkHref,
+	getWorkList,
+	getWorkSectionEntries,
+	getWorksIndexHref,
+	type WorkSummary,
+} from "@/utils/works-utils";
+
+// 检查页面是否启用
+if (!siteConfig.pages.works) {
+	return Astro.redirect("/404/");
+}
+
+export async function getStaticPaths() {
+	const works = await getWorkList();
+	return works.flatMap((summary) =>
+		// 三个分区都生成，URL 结构固定；空分区显示空态
+		WORK_SECTIONS.map((section) => ({
+			params: { work: summary.workId, section },
+			props: { summary, section },
+		})),
+	);
+}
+
+const { summary, section } = Astro.props as {
+	summary: WorkSummary;
+	section: WorkSection;
+};
+const meta = getWorkSectionMeta(section);
+const views = await getWorkSectionEntries(summary.workId, section);
+---
+
+<MainGridLayout
+  title={`${meta.name} - ${summary.title}`}
+  description={meta.description}
+>
+  <!-- 面包屑 -->
+  <nav class="flex flex-wrap items-center gap-1.5 text-sm mb-4 ml-1">
+    <a href={getWorksIndexHref()} class="text-(--primary) hover:underline">
+      {worksPageConfig.title}
+    </a>
+    <Icon name="material-symbols:chevron-right-rounded" class="text-base opacity-40" />
+    <a href={getWorkHref(summary.workId)} class="text-(--primary) hover:underline">
+      {summary.title}
+    </a>
+    <Icon name="material-symbols:chevron-right-rounded" class="text-base opacity-40" />
+    <span class="text-black/50 dark:text-white/50">{meta.name}</span>
+  </nav>
+
+  <!-- 分区头部 -->
+  <header class="card-base work-section-head mb-4">
+    <div class="work-section-head-icon" aria-hidden="true">
+      <Icon name={meta.icon} />
+    </div>
+    <div class="work-section-head-text">
+      {/* 可见标题用 div：MainGridLayout 已经渲染了一个 sr-only 的 h1 */}
+      <div class="work-section-head-title">{meta.name}</div>
+      <div class="work-section-head-desc">{meta.description}</div>
+    </div>
+    <span class="work-section-head-count">
+      {views.length} {meta.unit}
+    </span>
+  </header>
+
+  {views.length > 0
+    ? section === "stories"
+      ? (
+        <div class="card-base">
+          <WorkChapterList views={views} />
+        </div>
+      )
+      : (
+        /* 完整列表：按分类分组（可折叠）+ 标签筛选 */
+        <WorkEntryGroups views={views} filterable />
+      )
+    : (
+      <div class="card-base flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500">
+        <Icon name={meta.icon} class="text-6xl mb-4 opacity-40" />
+        <p class="text-lg">{worksPageConfig.sectionEmptyText}</p>
+      </div>
+    )}
+
+  <WorkFoldManager />
+</MainGridLayout>

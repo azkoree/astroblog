@@ -23,6 +23,8 @@ const pages = resolvePageToggles({
 	projects: false,
 	// MZ 插件页面开关
 	mzplugin: true,
+	// 创作板块页面开关（世界观 / 人物 / 正文），内容在 src/content/works/
+	works: true,
 	// 相册页面开关
 	gallery: false,
 	// 书签导航页面开关
@@ -57,12 +59,7 @@ export const siteConfig: SiteConfig = {
 		"Firefly 是一款基于 Astro 框架和 Fuwari 模板开发的清新美观且现代化个人博客主题模板，专为技术爱好者和内容创作者设计。该主题融合了现代 Web 技术栈，提供了丰富的功能模块和高度可定制的界面，让您能够轻松打造出专业且美观的个人博客网站。",
 
 	// 站点关键词
-	keywords: [
-		"生活",
-		"创作",
-		"RPG Maker",
-		"游戏开发"
-	],
+	keywords: ["生活", "创作", "RPG Maker", "游戏开发"],
 
 	// 主题色
 	themeColor: {

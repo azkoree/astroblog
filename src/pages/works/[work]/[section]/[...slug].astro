@@ -1,0 +1,231 @@
+---
+import { render } from "astro:content";
+import Markdown from "@components/common/Markdown.astro";
+import { Icon } from "astro-icon/components";
+import Comment from "@/components/comment/index.astro";
+import CoverImage from "@/components/common/CoverImage.astro";
+import WorkEntryNav from "@/components/pages/works/WorkEntryNav.astro";
+import { commentConfig, siteConfig, worksPageConfig } from "@/config";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import "@/styles/works.css";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import {
+	resolveProjectImage,
+	resolveProjectImageAbsolute,
+} from "@/utils/projects-utils";
+import { getFileDirFromPath } from "@/utils/url-utils";
+import type { WorkSection } from "@/utils/works-paths";
+import { WORK_SECTIONS } from "@/utils/works-paths";
+import { getWorkSectionMeta } from "@/utils/works-section-meta";
+import {
+	getWorkHref,
+	getWorkList,
+	getWorkNeighbors,
+	getWorkSectionEntries,
+	getWorksIndexHref,
+	type WorkEntryView,
+	type WorkSummary,
+} from "@/utils/works-utils";
+
+// 检查页面是否启用
+if (!siteConfig.pages.works) {
+	return Astro.redirect("/404/");
+}
+
+export async function getStaticPaths() {
+	const works = await getWorkList();
+	const paths: {
+		params: { work: string; section: string; slug: string };
+		props: { summary: WorkSummary; section: WorkSection; view: WorkEntryView };
+	}[] = [];
+
+	for (const summary of works) {
+		for (const section of WORK_SECTIONS) {
+			const views = await getWorkSectionEntries(summary.workId, section);
+			for (const view of views) {
+				paths.push({
+					params: { work: summary.workId, section, slug: view.slug },
+					props: { summary, section, view },
+				});
+			}
+		}
+	}
+
+	return paths;
+}
+
+const { summary, section, view } = Astro.props;
+const { entry, data } = view;
+const { Content, headings } = await render(entry);
+
+const meta = getWorkSectionMeta(section);
+const isCharacter = section === "characters";
+const isStory = section === "stories";
+
+// 同分区的上一条 / 下一条：正文即上一章 / 下一章
+const siblings = await getWorkSectionEntries(summary.workId, section);
+const { prev, next } = getWorkNeighbors(siblings, view.key);
+
+// OG 元数据用绝对 URL；页面内图片由 <CoverImage> 用原始 src + basePath 解析（同项目页）
+const ogImage = data.image
+	? await resolveProjectImageAbsolute(data.image, entry.filePath)
+	: "";
+const lightboxSrc = data.image
+	? await resolveProjectImage(data.image, entry.filePath)
+	: "";
+const basePath = getFileDirFromPath(entry.filePath || "");
+
+// 评论：需要在 commentConfig 里启用评论系统，并在 frontmatter 里把 comment 设为 true
+const isCommentEnabled =
+	data.comment && Boolean(commentConfig?.type) && commentConfig.type !== "none";
+---
+
+<MainGridLayout
+  title={data.title}
+  description={data.description || data.title}
+  lang={data.lang || undefined}
+  setOGTypeArticle={true}
+  headings={headings}
+  postCoverImage={ogImage}
+>
+  <div class="flex w-full rounded-(--radius-large) overflow-hidden relative mb-4">
+    <div id="post-container" class="card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full">
+      <!-- 面包屑 -->
+      <nav class="flex flex-wrap items-center gap-1.5 text-sm mb-4">
+        <a href={getWorksIndexHref()} class="text-(--primary) hover:underline">
+          {worksPageConfig.title}
+        </a>
+        <Icon name="material-symbols:chevron-right-rounded" class="text-base opacity-40" />
+        <a href={getWorkHref(summary.workId)} class="text-(--primary) hover:underline">
+          {summary.title}
+        </a>
+        <Icon name="material-symbols:chevron-right-rounded" class="text-base opacity-40" />
+        <span class="opacity-50">{meta.name}</span>
+      </nav>
+
+      <!-- 人物：头像 + 标题并排；其余：标题在上，封面在下 -->
+      <div class:list={["flex gap-4", isCharacter ? "items-center flex-wrap" : "flex-col"]}>
+        {isCharacter && data.image && (
+          <div class="work-entry-avatar is-character" style="width: 5rem; height: 5rem;">
+            <CoverImage
+              src={data.image}
+              basePath={basePath}
+              alt={data.title}
+              class="w-full h-full"
+              preview={false}
+            />
+          </div>
+        )}
+
+        <div>
+          {/* 可见标题用 div：MainGridLayout 已经渲染了一个 sr-only 的 h1，避免一页两个 h1 */}
+          <div
+            data-pagefind-weight="10"
+            data-pagefind-meta="title"
+            class="text-3xl md:text-[2.25rem]/[2.75rem] font-bold leading-tight text-neutral-900 dark:text-neutral-100"
+          >
+            {data.title}
+          </div>
+
+          <!-- 日期 + 分类 + 标签 -->
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
+            {
+              data.published && (
+                <div class="flex items-center">
+                  <div class="meta-icon">
+                    <Icon name="material-symbols:calendar-today-outline-rounded" class="text-xl" />
+                  </div>
+                  <time datetime={data.published.toISOString()} class="text-50 text-sm font-medium">
+                    {formatDateToYYYYMMDD(data.published)}
+                  </time>
+                </div>
+              )
+            }
+            {
+              data.category && (
+                <div class="flex items-center">
+                  <div class="meta-icon">
+                    <Icon name="material-symbols:folder-open-rounded" class="text-xl" />
+                  </div>
+                  <span class="text-50 text-sm font-medium whitespace-nowrap">
+                    {data.category}
+                  </span>
+                </div>
+              )
+            }
+            {
+              data.tags.length > 0 && (
+                <div class="flex items-center">
+                  <div class="meta-icon">
+                    <Icon name="material-symbols:tag-rounded" class="text-xl" />
+                  </div>
+                  <span class="flex flex-wrap items-center">
+                    {data.tags.map((tag, i) => (
+                      <span class="flex items-center">
+                        {i !== 0 && (
+                          <span class="mx-1.5 text-sm font-medium text-(--meta-divider)">/</span>
+                        )}
+                        <span class="text-50 text-sm font-medium whitespace-nowrap">{tag}</span>
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )
+            }
+          </div>
+
+          {data.description && (
+            <p class="mt-3 text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              {data.description}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <!-- 封面（人物已在标题旁显示头像，这里不重复） -->
+      {
+        data.image && !isCharacter && (
+          <div class="mt-5">
+            <div
+              data-fancybox="work-cover"
+              data-src={lightboxSrc}
+              data-type="image"
+              class="relative block w-full cursor-pointer overflow-hidden rounded-xl"
+            >
+              <CoverImage
+                src={data.image}
+                basePath={basePath}
+                alt={data.title}
+                class="w-full"
+                preview={false}
+                naturalHeight
+              />
+            </div>
+          </div>
+        )
+      }
+
+      <!-- 正文 -->
+      <div class="mt-4">
+        <Markdown class="mb-6 markdown-content">
+          <Content />
+        </Markdown>
+      </div>
+    </div>
+  </div>
+
+  <!-- 上一条 / 下一条：正文用「上一章 / 下一章」 -->
+  <WorkEntryNav
+    prev={prev}
+    next={next}
+    prevLabel={isStory ? worksPageConfig.chapterPrevText : worksPageConfig.entryPrevText}
+    nextLabel={isStory ? worksPageConfig.chapterNextText : worksPageConfig.entryNextText}
+  />
+
+  {isCommentEnabled && (
+    <Comment
+      customPath={`/works/${view.workId}/${section}/${view.slug}/`}
+      title={data.title}
+    />
+  )}
+</MainGridLayout>

@@ -1,0 +1,46 @@
+---
+import { Icon } from "astro-icon/components";
+
+// 可折叠的分区区块（世界观 / 人物 / 正文）。
+// 默认展开由 worksConfig.sectionsCollapsedByDefault 决定，服务端直接渲染 data-open，
+// 没有 JS 时也是正确的展开/收起状态。
+
+interface Props {
+	/** 锚点 id，同时用于 aria-controls */
+	id: string;
+	name: string;
+	description?: string;
+	icon: string;
+	count: number;
+	unit: string;
+	open?: boolean;
+}
+
+const { id, name, description, icon, count, unit, open = true } = Astro.props;
+---
+
+<section class="card-base work-section-block work-fold" data-open={String(open)}>
+  <button
+    type="button"
+    class="work-fold-toggle work-section-head"
+    data-work-fold-toggle
+    aria-expanded={open}
+    aria-controls={id}
+  >
+    <span class="work-section-head-icon" aria-hidden="true">
+      <Icon name={icon} />
+    </span>
+    <span class="work-section-head-text">
+      <span class="work-section-head-title">{name}</span>
+      {description && <span class="work-section-head-desc">{description}</span>}
+    </span>
+    <span class="work-section-head-count">{count} {unit}</span>
+    <Icon name="material-symbols:keyboard-arrow-down-rounded" class="work-fold-arrow" />
+  </button>
+
+  <div class="work-fold-body" id={id}>
+    <div class="work-fold-inner">
+      <slot />
+    </div>
+  </div>
+</section>

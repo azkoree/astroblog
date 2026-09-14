@@ -1,0 +1,134 @@
+---
+import { Icon } from "astro-icon/components";
+import CoverImage from "@/components/common/CoverImage.astro";
+import WorkChapterList from "@/components/pages/works/WorkChapterList.astro";
+import WorkEntryGroups from "@/components/pages/works/WorkEntryGroups.astro";
+import WorkFoldManager from "@/components/pages/works/WorkFoldManager.astro";
+import WorkFoldSection from "@/components/pages/works/WorkFoldSection.astro";
+import { worksConfig, worksPageConfig } from "@/config";
+import { getFileDirFromPath } from "@/utils/url-utils";
+import type { WorkSection } from "@/utils/works-paths";
+import { WORK_SECTION_LIST } from "@/utils/works-section-meta";
+import {
+	getWorkSectionHref,
+	type WorkEntryView,
+	type WorkSummary,
+} from "@/utils/works-utils";
+
+interface Props {
+	summary: WorkSummary;
+	/** 三个分区的全部条目（已排序） */
+	sections: Record<WorkSection, WorkEntryView[]>;
+}
+
+const { summary, sections } = Astro.props;
+
+const basePath = getFileDirFromPath(summary.entry?.filePath || "");
+const sectionsOpen = !worksConfig.sectionsCollapsedByDefault;
+---
+
+<!-- 作品头部 -->
+<header class="card-base work-hero">
+  {
+    summary.image && (
+      <div class="work-hero-cover">
+        <CoverImage
+          src={summary.image}
+          basePath={basePath}
+          alt={summary.title}
+          class="w-full"
+          preview={false}
+          naturalHeight
+        />
+      </div>
+    )
+  }
+
+  <div class="flex-1 min-w-0">
+    <div class="flex flex-wrap items-center gap-3">
+      {/* 可见标题用 div：MainGridLayout 已经渲染了一个 sr-only 的 h1，避免一页两个 h1 */}
+      <div class="work-hero-title">{summary.title}</div>
+      {summary.status && <span class="work-status-badge">{summary.status}</span>}
+    </div>
+
+    {summary.description && (
+      <p class="work-hero-description text-neutral-600 dark:text-neutral-400">
+        {summary.description}
+      </p>
+    )}
+
+    {summary.tags.length > 0 && (
+      <div class="flex flex-wrap items-center gap-2 mt-3">
+        {summary.tags.map((tag) => (
+          <span class="category-pill px-3 py-1 rounded-full text-xs font-medium">
+            {tag}
+          </span>
+        ))}
+      </div>
+    )}
+
+    <div class="work-section-stats">
+      {
+        WORK_SECTION_LIST.map((meta) => (
+          <span class="work-section-stat">
+            <Icon name={meta.icon} />
+            {summary.counts[meta.key]}
+            {meta.unit}
+            {meta.name}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+</header>
+
+<!-- 作品简介正文（来自 index.md），由页面作为默认插槽传入 -->
+<slot />
+
+<!-- 三个分区：整块可折叠，世界观/人物内部再按分类分组（分组也可折叠） -->
+{
+  WORK_SECTION_LIST.map((meta) => {
+    const views = sections[meta.key];
+    // 作品主页只展示节选，完整列表（带标签筛选）在分区列表页
+    const preview = views.slice(0, worksConfig.previewCount);
+    const more = views.length - preview.length;
+
+    return (
+      <WorkFoldSection
+        id={`work-section-${meta.key}`}
+        name={meta.name}
+        description={meta.description}
+        icon={meta.icon}
+        count={views.length}
+        unit={meta.unit}
+        open={sectionsOpen}
+      >
+        {preview.length > 0 ? (
+          meta.key === "stories" ? (
+            <div class="work-sec-body-pad">
+              <WorkChapterList views={preview} />
+            </div>
+          ) : (
+            <WorkEntryGroups views={preview} padded />
+          )
+        ) : (
+          <div class="work-section-empty">{worksPageConfig.sectionEmptyText}</div>
+        )}
+
+        {more > 0 && (
+          <div class="work-section-foot">
+            <a
+              href={getWorkSectionHref(summary.workId, meta.key)}
+              class="work-section-foot-link"
+            >
+              {worksPageConfig.sectionViewAllText}
+              <Icon name="material-symbols:chevron-right-rounded" class="text-base" />
+            </a>
+          </div>
+        )}
+      </WorkFoldSection>
+    );
+  })
+}
+
+<WorkFoldManager />

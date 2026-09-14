@@ -88,6 +88,22 @@ type MzPluginData = {
 	comment: boolean;
 };
 
+type WorkData = {
+	title: string;
+	published?: Date;
+	updated?: Date;
+	draft: boolean;
+	order?: number;
+	description: string;
+	image: string;
+	status: string;
+	// 世界观 / 人物用来分组展示；不写归入「未分类」
+	category: string;
+	tags: string[];
+	lang: string;
+	comment: boolean;
+};
+
 type ContentCollection<T> = CollectionConfig<
 	ZodType<T>,
 	ReturnType<typeof glob>
@@ -207,16 +223,46 @@ const mzpluginCollection: ContentCollection<MzPluginData> = defineCollection({
 	}),
 });
 
+// 创作板块：世界观 / 人物 / 正文。
+// 目录结构决定分类与 URL，不写进 frontmatter：
+//   src/content/works/<作品>/index.md          → /works/<作品>/
+//   src/content/works/<作品>/world/<条目>.md    → /works/<作品>/world/<条目>/
+// 分区目录名固定为 world | characters | stories（见 utils/works-paths.ts）。
+const worksCollection: ContentCollection<WorkData> = defineCollection({
+	loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/works" }),
+	schema: z.object({
+		title: z.string(),
+		// 设定类条目常常没有「发布日期」，因此可选；只影响排序与显示
+		published: z.date().optional(),
+		updated: z.date().optional(),
+		draft: z.boolean().optional().default(false),
+		// 同分区内排序；正文章节就是章节号。设置后优先于日期
+		order: z.number().optional(),
+		description: z.string().optional().default(""),
+		// 人物页当头像，其余当作封面
+		image: z.string().optional().default(""),
+		// 作品状态（连载中 / 已完结…），自由文本，只在作品卡片与作品主页显示
+		status: z.string().optional().default(""),
+		// 世界观 / 人物的分类，用来在列表里分组展示；留空归入「未分类」
+		category: z.string().optional().default(""),
+		tags: z.array(z.string()).optional().default([]),
+		lang: z.string().optional().default(""),
+		comment: z.boolean().optional().default(true),
+	}),
+});
+
 export const collections: {
 	dynamic: typeof dynamicCollection;
 	posts: typeof postsCollection;
 	spec: typeof specCollection;
 	projects: typeof projectsCollection;
 	mzplugin: typeof mzpluginCollection;
+	works: typeof worksCollection;
 } = {
 	dynamic: dynamicCollection,
 	posts: postsCollection,
 	spec: specCollection,
 	projects: projectsCollection,
 	mzplugin: mzpluginCollection,
+	works: worksCollection,
 };

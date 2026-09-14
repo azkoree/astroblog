@@ -7,7 +7,7 @@ icon: ''
 image: https://img.57hmpg.top/file/1789297289950_20260913190125187.png
 tags: [外部工具]
 engine: [MZ]
-mzVersion: '不限'
+mzVersion: '版本不限'
 requires: 
     - name: WSQ_Achievement
     - name: WSQ_AlchemySystem
