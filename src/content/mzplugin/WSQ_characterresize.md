@@ -20,8 +20,8 @@ downloads:
       url: https://raw.githubusercontent.com/azkoree/57_MZPlugin/refs/heads/main/WSQ_CharacterResize.js
       size: 26 KB
       icon: fa7-brands:github
-draft: true
-comment: false
+draft: false
+comment: true
 ---
 
 ## 功能
