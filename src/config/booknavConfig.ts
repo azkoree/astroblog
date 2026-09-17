@@ -93,13 +93,28 @@ export const booknavConfig: BooknavGroup[] = [
 			{
 				title: "Triacontane",
 				url: "https://github.com/triacontane/RPGMakerMV",
-				desc: "Triacontane的插件仓库，实现了许多小功能",
+				desc: "日系作者，有较多实现小功能的各种插件",
 				// icon 字段可以使用 astro-icon 图标库的图标名称
 				// 也可以使用图片 URL 和本地图片路径
 				// 不填则会通过接口自动获取目标站点的 favicon 图标（需要在上面配置）
 				icon: "",
 				weight: 10,
 			},
+			{
+				title: "NUUN",
+				url: "https://github.com/nuun888/MZ",
+				desc: "日系作者，插件种类较多，在booth出售插件",
+				icon: "",
+				weight: 10,
+			},
+			{
+				title: "Unagiootoro",
+				url: "https://github.com/unagiootoro/RPGMZ",
+				desc: "日系作者，比较出名的是像素移动插件",
+				icon: "",
+				weight: 10,
+			},
+
 		],
 	},
 
