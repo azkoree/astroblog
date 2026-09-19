@@ -20,7 +20,6 @@ downloads:
       icon: material-symbols:download-rounded
     - label: github
       url: https://raw.githubusercontent.com/azkoree/57_MZPlugin/refs/heads/main/WSQ_HalfCollisionEx.js
-      size: 29 KB
       icon: fa7-brands:github
 
 draft: false
