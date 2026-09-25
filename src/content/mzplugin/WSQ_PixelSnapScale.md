@@ -5,7 +5,7 @@ description: '让显示比例吸附到像素单位，舍去引擎自带画面拉
 version: 1.0.0
 icon: ''
 image: ''
-tags: [视觉, 效率]
+tags: [视觉]
 engine: [MZ]
 mzVersion: '版本不限'
 requires: []
@@ -14,7 +14,7 @@ downloads:
     - label: 站内下载
       url: /downloads/WSQ_PixelSnapScale.js
       size: 29 KB
-      file: WSQ_WSQ_PixelSnapScale.js
+      file: WSQ_PixelSnapScale.js
       icon: material-symbols:download-rounded
     - label: github
       url: https://raw.githubusercontent.com/azkoree/57_MZPlugin/refs/heads/main/WSQ_PixelSnapScale.js
@@ -44,6 +44,6 @@ comment: true
 
 ## 更新日志
 
-### 20260919
+### v1.0.0 20260919
 
 - 首次发布

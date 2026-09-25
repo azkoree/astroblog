@@ -5,7 +5,7 @@ description: '从图片检测HalfMove的碰撞判定，不占用区域id'
 version: 1.0.12
 icon: ''
 image: ''
-tags: [地图, 效率]
+tags: [地图]
 engine: [MZ]
 mzVersion: '版本不限'
 requires: 

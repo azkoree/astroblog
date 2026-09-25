@@ -117,5 +117,44 @@ export const booknavConfig: BooknavGroup[] = [
 
 		],
 	},
+	{
+		id: "assets",
+		name: "素材作者",
+		icon: "",
+		desc: "一些不错的素材作者网站推荐",
+		weight: 100,
+		items: [
+			{
+				title: "garakutamaker",
+				url: "https://garakutamaker.blog.fc2.com/",
+				desc: "有许多适用于200X系列的图像素材，有范例工程提供",
+				// icon 字段可以使用 astro-icon 图标库的图标名称
+				// 也可以使用图片 URL 和本地图片路径
+				// 不填则会通过接口自动获取目标站点的 favicon 图标（需要在上面配置）
+				icon: "",
+				weight: 10,
+			},
+			{
+				title: "vibrato",
+				url: "https://vibrato08.wixsite.com/p3x-774",
+				desc: "绘制了很多sv战斗图素材，有官方dlc",
+				// icon 字段可以使用 astro-icon 图标库的图标名称
+				// 也可以使用图片 URL 和本地图片路径
+				// 不填则会通过接口自动获取目标站点的 favicon 图标（需要在上面配置）
+				icon: "",
+				weight: 10,
+			},
+			{
+				title: "創作工房春巻",
+				url: "https://harumakikukan.web.fc2.com/",
+				desc: "发布了一些适用于MVMZ的数据库范例工程",
+				// icon 字段可以使用 astro-icon 图标库的图标名称
+				// 也可以使用图片 URL 和本地图片路径
+				// 不填则会通过接口自动获取目标站点的 favicon 图标（需要在上面配置）
+				icon: "",
+				weight: 10,
+			},
+		],
+	},
 
 ];
